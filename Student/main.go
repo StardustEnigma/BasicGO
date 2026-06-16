@@ -3,6 +3,7 @@ package main
 import (
 	"fmt"
 	"time"
+	"sync"
 )
 
 type Student struct {
@@ -34,12 +35,20 @@ func IdGenerator() func() int{
 		return id
 	}
 }
-func ProcessResults(student Student,resultChan chan string){
+func ProcessResults(student Student,passChan chan string,failChan chan string,mu *sync.Mutex,stats map[string]int){
 	fmt.Println("Checking result for :" ,student.name)
-	time.Sleep(2 *time.Second)
-
-
-	resultChan <- student.name
+	time.Sleep(2 *time.Second)	
+	if student.marks <= 40 {
+		failChan <- student.name
+		mu.Lock()
+		stats["fail"]++
+		mu.Unlock()
+		return
+	}
+	passChan <- student.name
+	mu.Lock()
+	stats["pass"]++
+	mu.Unlock()
 }
 func main(){
 	students :=[]Student{}
@@ -47,7 +56,7 @@ func main(){
 	students = append(students, 
 	Student{nextId(),"Atharva",85,"passed"},
 	Student{nextId(),"demo",70,"passed"},
-	Student{nextId(),"check",50,"failed"},
+	Student{nextId(),"check",40,"failed"},
 )
 for _,student := range students{
 	student.Display()
@@ -58,14 +67,26 @@ for _,person :=range students{
 	p=person
 	p.Show()
 }
+var mu sync.Mutex
+stats := map[string]int{
+	"pass":0,
+	"fail":0,
+}
 PrintAll(students)
-resultChan := make(chan string)
+passChan := make(chan string)
+failChan:= make(chan string)
 for _,student :=range students{
-	go ProcessResults(student,resultChan)
+	go ProcessResults(student,passChan,failChan,&mu,stats)
 }
 for i := 0; i < len(students); i++ {
-	name:= <- resultChan
-	fmt.Println("Result Processed for :" , name)
+	select{
+	case name := <-passChan :
+		fmt.Println("Pass :",name)
+
+	case name := <-failChan:
+		fmt.Println("fail :",name)
 }
+}
+fmt.Println(stats)
 
 }
