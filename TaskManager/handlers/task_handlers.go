@@ -1,12 +1,13 @@
 package handlers
 
 import (
+	"TaskManager/dto"
 	"TaskManager/models"
 	"TaskManager/services"
 	"encoding/json"
 	"fmt"
 	"net/http"
-	"TaskManager/dto"
+	
 )
 
 
@@ -137,4 +138,22 @@ func MarkCompleted(w http.ResponseWriter,r *http.Request){
 	
 	w.Header().Set("Content-Type","application/json")
 	json.NewEncoder(w).Encode(response)
+}
+
+func StartTask(w http.ResponseWriter,r *http.Request){
+	if r.Method != http.MethodPost {
+		http.Error(w,"Method Not allowed",http.StatusMethodNotAllowed)
+		return
+	}
+	idstr:=r.URL.Query().Get("id")
+
+	if idstr =="" {
+		http.Error(w,"Id is required",http.StatusBadRequest)
+		return
+	}
+	services.StartTask(idstr)
+
+	fmt.Fprintln(w,"Task Started")
+	fmt.Println("Task Started")
+	
 }

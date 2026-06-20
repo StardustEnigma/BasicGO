@@ -1,14 +1,17 @@
 package main
 
-import(
+import (
+	"TaskManager/routes"
+	"TaskManager/workers"
 	"fmt"
 	"net/http"
-	"TaskManager/routes"
 )
 
 func main(){
 	routes.ResgisterRoutes()
 	fmt.Println("Server is running at port : 8080")
-
+	for i := 0; i <=3; i++ {
+		go workers.Worker(i)
+	}
 	http.ListenAndServe(":8080",nil)
 }

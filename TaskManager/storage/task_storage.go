@@ -1,5 +1,9 @@
 package storage
 
-import "TaskManager/models"
+import (
+	"TaskManager/models"
+	"sync"
+)
 
+var Mu sync.Mutex
 var TaskData=[]models.Task{}

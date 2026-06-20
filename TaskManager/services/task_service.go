@@ -2,6 +2,7 @@ package services
 
 import (
 	"TaskManager/models"
+	"TaskManager/queue"
 	"TaskManager/storage"
 	"errors"
 	"strconv"
@@ -71,4 +72,27 @@ func CompleteTask(id string)(models.Task,error){
 		}
 	}
 	return storage.TaskData[i],nil
+}
+
+func StartTask(id string){
+	taskid,_:=strconv.Atoi(id)
+	
+	queue.TaskQueue <- taskid
+}
+
+func ProcessTask(taskid int){
+	for i,task := range storage.TaskData{
+		if taskid == task.TaskId{
+			storage.Mu.Lock()
+			storage.TaskData[i].TaskStatus=models.StatusProgress
+			storage.Mu.Unlock()
+
+			time.Sleep(5*time.Second)
+
+			storage.Mu.Lock()
+			storage.TaskData[i].CompletedAt=time.Now().UTC()
+			storage.TaskData[i].TaskStatus=models.StatusCompleted
+			storage.Mu.Unlock()
+		}
+	}
 }

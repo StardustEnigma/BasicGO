@@ -12,4 +12,5 @@ func ResgisterRoutes(){
 	http.HandleFunc("/Delete",handlers.DeleteTask)
 	http.HandleFunc("/updateTask",handlers.UpdateTask)
 	http.HandleFunc("/completeTask",handlers.MarkCompleted)
+	http.HandleFunc("/startTask",handlers.StartTask)
 }
