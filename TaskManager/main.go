@@ -8,10 +8,10 @@ import (
 )
 
 func main(){
-	routes.ResgisterRoutes()
+	router :=routes.RegisterRoutes()
 	fmt.Println("Server is running at port : 8080")
 	for i := 0; i <=3; i++ {
 		go workers.Worker(i)
 	}
-	http.ListenAndServe(":8080",nil)
+	http.ListenAndServe(":8080",router)
 }

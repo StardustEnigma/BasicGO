@@ -7,57 +7,61 @@ import (
 	"encoding/json"
 	"fmt"
 	"net/http"
-	
+
+	"github.com/go-chi/chi/v5"
 )
 
 
 func CreateTask(w http.ResponseWriter,r *http.Request){
-if r.Method !=http.MethodPost{
+	ctx :=r.Context()
+
+	if r.Method !=http.MethodPost{
 	http.Error(w,"Method Not Allowed",http.StatusMethodNotAllowed)
 	return
 }
-var task models.Task
-err :=json.NewDecoder(r.Body).Decode(&task)
-if err !=nil {
-	http.Error(w,"Invalid Json",http.StatusBadRequest)
-	return
+	var task models.Task
+	err :=json.NewDecoder(r.Body).Decode(&task)
+	if err !=nil {
+		http.Error(w,"Invalid Json",http.StatusBadRequest)
+		return
 }
-Createdtask,err:=services.CreateTask(task)
-if err != nil {
-	http.Error(w,"Bad Request",http.StatusBadRequest)
-	return
+	Createdtask,err:=services.CreateTask(task,ctx)
+	if err != nil {
+		http.Error(w,"Bad Request",http.StatusBadRequest)
+		return
 }
+	fmt.Println(Createdtask)
+	w.Header().Set("Content-Type","application/json")
 
-fmt.Println(Createdtask)
-w.Header().Set("Content-Type","application/json")
+	w.WriteHeader(http.StatusCreated)
 
-w.WriteHeader(http.StatusCreated)
-
-json.NewEncoder(w).Encode(Createdtask)
+	json.NewEncoder(w).Encode(Createdtask)
 }
 
 func PrintAllTasks(w http.ResponseWriter,r *http.Request){
+	ctx := r.Context()
 	if r.Method != http.MethodGet{
 		http.Error(w,"Method Not allowed",http.StatusMethodNotAllowed)
 		return
 	}
-	taskData := services.GetAllTask()
+	taskData := services.GetAllTask(ctx)
 	w.Header().Set("Content-Type","application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(taskData)
 }
 
 func GetTask(w http.ResponseWriter,r *http.Request){
+	ctx:= r.Context()
 	if r.Method !=http.MethodGet {
 		http.Error(w,"Method not Allowed",http.StatusMethodNotAllowed)
 		return
 	}
-	idstr :=r.URL.Query().Get("id")
+	idstr :=chi.URLParam(r,"id")
 	if idstr=="" {
 		http.Error(w,"Id is required",http.StatusBadRequest)
 		return
 	}
-	task, err:=services.GetTask(idstr)
+	task, err:=services.GetTask(idstr,ctx)
 	if err != nil {
 	http.Error(w,"Bad Request",http.StatusBadRequest)
 	return
@@ -67,17 +71,18 @@ func GetTask(w http.ResponseWriter,r *http.Request){
 }
 
 func DeleteTask(w http.ResponseWriter, r *http.Request){
+	ctx := r.Context()
 	if r.Method != http.MethodDelete {
 		http.Error(w,"Method Not Allowed",http.StatusMethodNotAllowed)
 		return
 	}
-	idstr := r.URL.Query().Get("id")
+	idstr := chi.URLParam(r,"id")
 
 	if idstr=="" {
 		http.Error(w,"Id is required",http.StatusBadRequest)
 		return
 	}
-	result := services.DeleteTask(idstr)
+	result := services.DeleteTask(idstr,ctx)
 
 	if result==false {
 		http.Error(w,"Cannot find Task to delete",http.StatusBadRequest)
@@ -88,11 +93,12 @@ func DeleteTask(w http.ResponseWriter, r *http.Request){
 }
 
 func UpdateTask(w http.ResponseWriter,r *http.Request){
+	ctx := r.Context()
 	if r.Method != http.MethodPut{
 		http.Error(w,"Method Not Allowed",http.StatusMethodNotAllowed)
 		return
 	}
-	idstr := r.URL.Query().Get("id")
+	idstr := chi.URLParam(r,"id")
 
 	if idstr==""{
 		http.Error(w,"Id is required",http.StatusBadRequest)
@@ -104,7 +110,7 @@ func UpdateTask(w http.ResponseWriter,r *http.Request){
 		http.Error(w,"Invalid Json" ,http.StatusBadRequest)
 		return
 	}
-	task,err:=services.UpdateTask(idstr,request.Title)
+	task,err:=services.UpdateTask(idstr,request.Title,ctx)
 	if err != nil {
 		http.Error(w,"Bad Request",http.StatusBadRequest)
 		return
@@ -115,18 +121,19 @@ func UpdateTask(w http.ResponseWriter,r *http.Request){
 }
 
 func MarkCompleted(w http.ResponseWriter,r *http.Request){
+	ctx := r.Context()
 	if r.Method != http.MethodPost {
 		http.Error(w,"Method Not Allowed",http.StatusMethodNotAllowed)
 		return
 	}
-	idstr :=r.URL.Query().Get("id")
+	idstr := chi.URLParam(r,"id")
 
 	if idstr=="" {
 		http.Error(w,"Id is required",http.StatusBadRequest)
 		return
 	}
 	var response dto.TaskComplete
-	task,err:=services.CompleteTask(idstr)
+	task,err:=services.CompleteTask(idstr,ctx)
 	if err!=nil {
 		http.Error(w,"Bad Request",http.StatusBadRequest)
 		return
@@ -141,17 +148,18 @@ func MarkCompleted(w http.ResponseWriter,r *http.Request){
 }
 
 func StartTask(w http.ResponseWriter,r *http.Request){
+	ctx := r.Context()
 	if r.Method != http.MethodPost {
 		http.Error(w,"Method Not allowed",http.StatusMethodNotAllowed)
 		return
 	}
-	idstr:=r.URL.Query().Get("id")
+	idstr:= chi.URLParam(r,"id")
 
 	if idstr =="" {
 		http.Error(w,"Id is required",http.StatusBadRequest)
 		return
 	}
-	services.StartTask(idstr)
+	services.StartTask(idstr,ctx)
 
 	fmt.Fprintln(w,"Task Started")
 	fmt.Println("Task Started")

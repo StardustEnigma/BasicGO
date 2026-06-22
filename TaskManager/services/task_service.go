@@ -4,11 +4,12 @@ import (
 	"TaskManager/models"
 	"TaskManager/queue"
 	"TaskManager/storage"
+	"context"
 	"errors"
 	"strconv"
 	"time"
 )
-func CreateTask( task models.Task)(models.Task,error){
+func CreateTask( task models.Task,ctx context.Context)(models.Task,error){
 	if task.Title=="" {
 		return models.Task{},errors.New("title is required")
 	}
@@ -20,11 +21,11 @@ func CreateTask( task models.Task)(models.Task,error){
 	return  task,nil
 }
 
-func GetAllTask()[]models.Task{
+func GetAllTask(ctx context.Context)[]models.Task{
 	return storage.TaskData
 }
 
-func GetTask(id string)(models.Task,error){
+func GetTask(id string,ctx context.Context)(models.Task,error){
 	taskid,_:=strconv.Atoi(id)
 	var taskAsk models.Task
 	for _, task := range storage.TaskData{
@@ -35,7 +36,7 @@ func GetTask(id string)(models.Task,error){
 	return taskAsk,nil
 }
 
-func DeleteTask(id string)(bool){
+func DeleteTask(id string,ctx context.Context)(bool){
 	taskid,_:=strconv.Atoi(id)
 
 	for index,task := range storage.TaskData{
@@ -49,7 +50,7 @@ func DeleteTask(id string)(bool){
 	return true
 }
 
-func UpdateTask(id string,title string)(models.Task,error){
+func UpdateTask(id string,title string,ctx context.Context)(models.Task,error){
 	taskid,_:=strconv.Atoi(id)
 	var i int
 	for index,task :=range storage.TaskData{
@@ -61,7 +62,7 @@ func UpdateTask(id string,title string)(models.Task,error){
 	return storage.TaskData[i],nil
 }
 
-func CompleteTask(id string)(models.Task,error){
+func CompleteTask(id string,ctx context.Context)(models.Task,error){
 	taskid,_:=strconv.Atoi(id)
 	var i int
 	for index,task := range storage.TaskData{
@@ -74,7 +75,7 @@ func CompleteTask(id string)(models.Task,error){
 	return storage.TaskData[i],nil
 }
 
-func StartTask(id string){
+func StartTask(id string,ctx context.Context){
 	taskid,_:=strconv.Atoi(id)
 	
 	queue.TaskQueue <- taskid

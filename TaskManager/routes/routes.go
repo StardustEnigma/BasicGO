@@ -2,15 +2,21 @@ package routes
 
 import (
 	"TaskManager/handlers"
-	"net/http"
+	middlerware "TaskManager/middleware"
+
+	"github.com/go-chi/chi/v5"
 )
 
-func ResgisterRoutes(){
-	http.HandleFunc("/CreateTask",handlers.CreateTask)
-	http.HandleFunc("/Tasks",handlers.PrintAllTasks)
-	http.HandleFunc("/Task",handlers.GetTask)
-	http.HandleFunc("/Delete",handlers.DeleteTask)
-	http.HandleFunc("/updateTask",handlers.UpdateTask)
-	http.HandleFunc("/completeTask",handlers.MarkCompleted)
-	http.HandleFunc("/startTask",handlers.StartTask)
+func RegisterRoutes() *chi.Mux{
+	r := chi.NewRouter()
+	r.Use(middlerware.Logger)
+	r.Post("/tasks",handlers.CreateTask)
+	r.Get("/tasks",handlers.PrintAllTasks)
+	r.Get("/tasks/{id}",handlers.GetTask)
+	r.Delete("/tasks/{id}",handlers.DeleteTask)
+	r.Put("/tasks/{id}",handlers.UpdateTask)
+	r.Post("/tasks/{id}/complete",handlers.MarkCompleted)
+	r.Post("/tasks/{id}/start",handlers.StartTask)
+
+	return r
 }

@@ -7,8 +7,6 @@ import (
 	"time"
 )
 
-
-
 func Worker(workerId int) {
 	for taskId := range queue.TaskQueue {
 		fmt.Println("Worker ",workerId,"Picked Task ",taskId)
