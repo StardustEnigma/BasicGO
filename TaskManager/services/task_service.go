@@ -3,6 +3,7 @@ package services
 import (
 	"TaskManager/models"
 	"TaskManager/queue"
+	"TaskManager/repository"
 	"TaskManager/storage"
 	"context"
 	"errors"
@@ -13,11 +14,15 @@ func CreateTask( task models.Task,ctx context.Context)(models.Task,error){
 	if task.Title=="" {
 		return models.Task{},errors.New("title is required")
 	}
-	task.TaskId=len(storage.TaskData)+1
 	task.CreatedAt=time.Now().UTC()
 	task.TaskStatus=models.StatusPending
-	storage.TaskData=append(storage.TaskData, task)
-
+	err := repository.CreateTask(
+		ctx,
+		task,
+	)
+	if err !=nil {
+		return models.Task{},err
+	}
 	return  task,nil
 }
 

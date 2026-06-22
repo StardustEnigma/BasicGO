@@ -1,6 +1,7 @@
 package main
 
 import (
+	"TaskManager/db"
 	"TaskManager/routes"
 	"TaskManager/workers"
 	"fmt"
@@ -10,6 +11,10 @@ import (
 func main(){
 	router :=routes.RegisterRoutes()
 	fmt.Println("Server is running at port : 8080")
+	err :=db.ConnectDb()
+	if err != nil {
+		panic(err)
+	}
 	for i := 0; i <=3; i++ {
 		go workers.Worker(i)
 	}

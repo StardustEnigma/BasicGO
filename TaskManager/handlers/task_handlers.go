@@ -27,8 +27,9 @@ func CreateTask(w http.ResponseWriter,r *http.Request){
 }
 	Createdtask,err:=services.CreateTask(task,ctx)
 	if err != nil {
-		http.Error(w,"Bad Request",http.StatusBadRequest)
-		return
+		fmt.Println("ERROR:", err)
+	http.Error(w, err.Error(), http.StatusBadRequest)
+	return
 }
 	fmt.Println(Createdtask)
 	w.Header().Set("Content-Type","application/json")
