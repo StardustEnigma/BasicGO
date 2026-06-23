@@ -45,7 +45,15 @@ func PrintAllTasks(w http.ResponseWriter,r *http.Request){
 		http.Error(w,"Method Not allowed",http.StatusMethodNotAllowed)
 		return
 	}
-	taskData := services.GetAllTask(ctx)
+	taskData,err := services.GetAllTask(ctx)
+	if err !=nil {
+		// 1. Log the actual error to your console so you can read it!
+    fmt.Println("Error fetching tasks:", err) 
+    
+    // 2. Minor fix: Database errors should usually be 500 Internal Server Error, not 400 Bad Request
+    http.Error(w, "Failed to fetch tasks", http.StatusInternalServerError)
+    return
+	}
 	w.Header().Set("Content-Type","application/json")
 	w.WriteHeader(http.StatusOK)
 	json.NewEncoder(w).Encode(taskData)
@@ -64,8 +72,11 @@ func GetTask(w http.ResponseWriter,r *http.Request){
 	}
 	task, err:=services.GetTask(idstr,ctx)
 	if err != nil {
-	http.Error(w,"Bad Request",http.StatusBadRequest)
-	return
+	fmt.Println("Error fetching tasks:", err) 
+    
+    // 2. Minor fix: Database errors should usually be 500 Internal Server Error, not 400 Bad Request
+    http.Error(w, "Failed to fetch tasks", http.StatusInternalServerError)
+    return
 }
 	w.Header().Set("Content-Type","application/json")
 	json.NewEncoder(w).Encode(task)
@@ -83,12 +94,12 @@ func DeleteTask(w http.ResponseWriter, r *http.Request){
 		http.Error(w,"Id is required",http.StatusBadRequest)
 		return
 	}
-	result := services.DeleteTask(idstr,ctx)
-
-	if result==false {
-		http.Error(w,"Cannot find Task to delete",http.StatusBadRequest)
+	err :=services.DeleteTask(idstr,ctx)
+	if err != nil{
+		http.Error(w,"Bad Request",http.StatusBadRequest)
 		return
 	}
+
 	w.Header().Set("Content-Type","application/json")
 	fmt.Fprint(w,"Task deleted successfully !!")
 }
