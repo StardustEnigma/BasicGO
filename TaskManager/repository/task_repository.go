@@ -3,24 +3,39 @@ package repository
 import (
 	"TaskManager/db"
 	"TaskManager/models"
-
 	"context"
 	"database/sql"
+	"fmt"
 )
 
-func CreateTask(ctx context.Context, task models.Task) error {
+func CreateTask(ctx context.Context, task models.Task)(models.Task ,error) {
 	query := `INSERT INTO tasks
 			(title,status,created_at)
 			VALUES($1,$2,$3)
+			RETURNING task_id, title, status, created_at, completed_at
 			`
-	_, err := db.DB.ExecContext(
+	var newTask models.Task
+	var nullCompleteAt sql.NullTime
+	 err := db.DB.QueryRowContext(
 		ctx,
 		query,
 		task.Title,
 		task.TaskStatus,
 		task.CreatedAt,
+	).Scan(
+		&newTask.TaskId,
+		&newTask.Title,
+		&newTask.TaskStatus,
+		&newTask.CreatedAt,
+		&nullCompleteAt,
 	)
-	return err
+	if err != nil {
+		return models.Task{},err
+	}
+	if nullCompleteAt.Valid {
+		newTask.CompletedAt=&nullCompleteAt.Time
+	}
+	return newTask,nil
 }
 
 func GetAllTask(ctx context.Context) ([]models.Task, error) {
@@ -98,10 +113,77 @@ func DeleteTask(ctx context.Context,id int)(error){
 				tasks 
 				WHERE task_id = $1`
 	
-	_,err := db.DB.ExecContext(
+	result,err := db.DB.ExecContext(
 		ctx,
 		query,
 		id,
 	)
-	return err
+
+	rowsAffected,err:=result.RowsAffected()
+	if err != nil{
+		return err
+	}
+	if rowsAffected==0 {
+		return fmt.Errorf("Id : %d not present",id)
+	}
+	return nil
+}
+
+func UpdateTask(ctx context.Context,id int,title string)(models.Task,error){
+	query := `UPDATE tasks
+				SET title = $2
+				WHERE task_id = $1
+				RETURNING title, task_id, status, created_at, completed_at`
+	var task models.Task
+	var nullCompleteAt sql.NullTime
+	err:=db.DB.QueryRowContext(
+		ctx,
+		query,
+		id,
+		title,
+	).Scan(
+		&task.Title,
+		&task.TaskId,
+		&task.TaskStatus,
+		&task.CreatedAt,
+		&nullCompleteAt,
+	)
+	if err != nil {
+		return models.Task{},err
+	}
+	if nullCompleteAt.Valid {
+		task.CompletedAt=&nullCompleteAt.Time
+	}
+	return task,nil
+	
+}
+func CompleteTask(ctx context.Context,id int)(models.Task,error){
+	query := `UPDATE tasks
+				SET completed_at=NOW()
+				WHERE task_id = $1
+				RETURNING task_id, title, status, created_at, completed_at`
+	var task models.Task
+	var nullCompleteAt sql.NullTime
+	err := db.DB.QueryRowContext(
+		ctx,
+		query,
+		id,
+	).Scan(
+		&task.TaskId,
+		&task.Title,
+		&task.TaskStatus,
+		&task.CreatedAt,
+		&nullCompleteAt,
+	)
+	if err !=nil {
+		if err == sql.ErrNoRows {
+			return models.Task{},fmt.Errorf("Task with %d not found",id)
+		}
+		return models.Task{},err
+	}
+	if nullCompleteAt.Valid {
+		task.CompletedAt=&nullCompleteAt.Time
+	}
+	return task,nil
+
 }

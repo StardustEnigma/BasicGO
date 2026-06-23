@@ -16,7 +16,7 @@ func CreateTask( task models.Task,ctx context.Context)(models.Task,error){
 	}
 	task.CreatedAt=time.Now().UTC()
 	task.TaskStatus=models.StatusPending
-	err := repository.CreateTask(
+	task,err := repository.CreateTask(
 		ctx,
 		task,
 	)
@@ -56,28 +56,20 @@ func DeleteTask(id string,ctx context.Context)(error){
 
 func UpdateTask(id string,title string,ctx context.Context)(models.Task,error){
 	taskid,_:=strconv.Atoi(id)
-	var i int
-	for index,task :=range storage.TaskData{
-		if taskid==task.TaskId{
-			i=index
-			storage.TaskData[index].Title=title
-		}
+	task,err:= repository.UpdateTask(ctx,taskid,title)
+	if err !=nil {
+		return models.Task{},err
 	}
-	return storage.TaskData[i],nil
+	return task,nil
 }
 
 func CompleteTask(id string,ctx context.Context)(models.Task,error){
 	taskid,_:=strconv.Atoi(id)
-	var i int
-	for index,task := range storage.TaskData{
-		if taskid==task.TaskId {
-			i=index
-			currentTime := time.Now().UTC()
-			storage.TaskData[index].CompletedAt=&currentTime
-			storage.TaskData[index].TaskStatus=models.StatusCompleted
-		}
+	task,err:=repository.CompleteTask(ctx,taskid)
+	if err != nil {
+		return models.Task{},err
 	}
-	return storage.TaskData[i],nil
+	return task,nil
 }
 
 func StartTask(id string,ctx context.Context){

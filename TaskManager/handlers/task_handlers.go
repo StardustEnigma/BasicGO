@@ -47,9 +47,7 @@ func PrintAllTasks(w http.ResponseWriter,r *http.Request){
 	}
 	taskData,err := services.GetAllTask(ctx)
 	if err !=nil {
-		// 1. Log the actual error to your console so you can read it!
-    fmt.Println("Error fetching tasks:", err) 
-    
+
     // 2. Minor fix: Database errors should usually be 500 Internal Server Error, not 400 Bad Request
     http.Error(w, "Failed to fetch tasks", http.StatusInternalServerError)
     return
@@ -124,7 +122,7 @@ func UpdateTask(w http.ResponseWriter,r *http.Request){
 	}
 	task,err:=services.UpdateTask(idstr,request.Title,ctx)
 	if err != nil {
-		http.Error(w,"Bad Request",http.StatusBadRequest)
+		 http.Error(w,"Bad Request",http.StatusBadRequest)
 		return
 	}
 	w.Header().Set("Content-Type","application/json")
