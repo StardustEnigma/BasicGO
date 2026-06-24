@@ -4,9 +4,9 @@ import (
 	"TaskManager/models"
 	"TaskManager/queue"
 	"TaskManager/repository"
-	"TaskManager/storage"
 	"context"
 	"errors"
+	"fmt"
 	"strconv"
 	"time"
 )
@@ -72,26 +72,35 @@ func CompleteTask(id string,ctx context.Context)(models.Task,error){
 	return task,nil
 }
 
-func StartTask(id string,ctx context.Context){
-	taskid,_:=strconv.Atoi(id)
-	
+func StartTask(id string,ctx context.Context)error{
+	taskid,err:=strconv.Atoi(id)
+	if err != nil {
+		return fmt.Errorf("invalid task id")
+	}
+	taskExists,err :=repository.CheckTaskExist(ctx,taskid)
+
+	if err != nil {
+		return fmt.Errorf("database error: %v", err)
+	}
+	if !taskExists {
+		return fmt.Errorf("task with id %d does not exist", taskid)
+	}
 	queue.TaskQueue <- taskid
+
+	return nil
 }
 
-func ProcessTask(taskid int){
-	for i,task := range storage.TaskData{
-		if taskid == task.TaskId{
-			storage.Mu.Lock()
-			storage.TaskData[i].TaskStatus=models.StatusProgress
-			storage.Mu.Unlock()
-
-			time.Sleep(5*time.Second)
-
-			storage.Mu.Lock()
-			currentTime := time.Now().UTC()
-			storage.TaskData[i].CompletedAt=&currentTime
-			storage.TaskData[i].TaskStatus=models.StatusCompleted
-			storage.Mu.Unlock()
-		}
+func ProcessTask(taskid int,ctx context.Context) error{
+	
+	err := repository.ProcessTask(ctx,taskid)
+	if err != nil {
+		return err
 	}
+	time.Sleep(5*time.Second)
+
+	_,err =repository.CompleteTask(ctx,taskid)
+	if err != nil {
+		return err
+	}
+	return nil
 }

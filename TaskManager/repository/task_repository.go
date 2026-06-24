@@ -159,7 +159,8 @@ func UpdateTask(ctx context.Context,id int,title string)(models.Task,error){
 }
 func CompleteTask(ctx context.Context,id int)(models.Task,error){
 	query := `UPDATE tasks
-				SET completed_at=NOW()
+				SET completed_at=NOW(),
+				 status=$2
 				WHERE task_id = $1
 				RETURNING task_id, title, status, created_at, completed_at`
 	var task models.Task
@@ -168,6 +169,7 @@ func CompleteTask(ctx context.Context,id int)(models.Task,error){
 		ctx,
 		query,
 		id,
+		models.StatusCompleted,
 	).Scan(
 		&task.TaskId,
 		&task.Title,
@@ -186,4 +188,47 @@ func CompleteTask(ctx context.Context,id int)(models.Task,error){
 	}
 	return task,nil
 
+}
+
+func ProcessTask(ctx context.Context,id int)(error){
+	query :=`UPDATE tasks
+			SET status = $2
+			where task_id = $1`
+	
+	result,err :=db.DB.ExecContext(
+		ctx,
+		query,
+		id,
+		models.StatusProgress,
+	)
+	if err != nil {
+		return err
+	}
+	rowsAffected,err :=result.RowsAffected()
+	if err != nil {
+		return err
+	}
+	if rowsAffected==0 {
+		return fmt.Errorf("cannot find %d id ",id)
+	}
+
+	return nil
+}
+
+func CheckTaskExist(ctx context.Context,id int)(bool,error){
+ query := `SELECT 1 
+ 			FROM tasks
+			WHERE task_id=$1`
+	var dummy int
+
+	err := db.DB.QueryRowContext(ctx,query,id).Scan(dummy)
+
+	if err != nil {
+		if err==sql.ErrNoRows{
+			return false,nil
+		}
+		return false,err
+	}
+
+	return true,nil
 }
