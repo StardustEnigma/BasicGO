@@ -1,7 +1,6 @@
 package services
 
 import (
-	"TaskManager/dto"
 	"TaskManager/models"
 	"TaskManager/queue"
 	"TaskManager/repository"
@@ -11,7 +10,7 @@ import (
 	"strconv"
 	"time"
 
-	"golang.org/x/crypto/bcrypt"
+	
 )
 func CreateTask( task models.Task,ctx context.Context)(models.Task,error){
 	if task.Title=="" {
@@ -108,20 +107,3 @@ func ProcessTask(taskid int,ctx context.Context) error{
 	return nil
 }
 
-func CreateUser(ctx context.Context,registerUser dto.RegisterRequest)(models.User,error){
-	hashedPassword, err:= bcrypt.GenerateFromPassword([]byte(registerUser.Password),bcrypt.DefaultCost)
-	if err != nil {
-		return models.User{},err
-	}
-	var user models.User
-	user.Email=registerUser.Email
-	registerUser.Password=string(hashedPassword)
-	user.Password=registerUser.Password
-	user.CreatedAt=time.Now().UTC()
-	savedUser,err:=repository.CreateUser(ctx,user)
-	if err != nil {
-		return models.User{},err
-	}
-
-	return savedUser,nil
-}

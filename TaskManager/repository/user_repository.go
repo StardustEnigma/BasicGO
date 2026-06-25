@@ -4,6 +4,7 @@ import (
 	"TaskManager/db"
 	"TaskManager/models"
 	"context"
+
 )
 
 func CreateUser(ctx context.Context,user models.User)(models.User,error){
@@ -28,4 +29,30 @@ func CreateUser(ctx context.Context,user models.User)(models.User,error){
 			return models.User{},err
 		}
 		return newUser,nil
+}
+
+func GetUserFromLogin(ctx context.Context,email string)(models.User,error){
+	query := `SELECT 
+				user_id,
+				email,
+				password,
+				created_at
+				FROM users
+				WHERE email = $1`
+	var user models.User
+	err := db.DB.QueryRowContext(
+		ctx,
+		query,
+		email,
+	).Scan(
+		&user.UserId,
+		&user.Email,
+		&user.Password,
+		&user.CreatedAt,
+	)
+	if err != nil{
+		return models.User{},err
+	}
+	return user,nil
+
 }
