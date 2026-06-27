@@ -4,7 +4,7 @@ import (
 	"TaskManager/dto"
 	"TaskManager/models"
 	"TaskManager/repository"
-
+	"TaskManager/utils"
 	"context"
 	"errors"
 	"time"
@@ -29,15 +29,20 @@ func CreateUser(ctx context.Context, registerUser dto.RegisterRequest) (models.U
 
 	return savedUser, nil
 }
-func LoginUser(ctx context.Context,request dto.LoginRequest)(models.User,error){
+func LoginUser(ctx context.Context,request dto.LoginRequest)(string,error){
 	user,err := repository.GetUserFromLogin(ctx,request.Email)
 	if err != nil {
-		return models.User{},err
+		return "",err
 	}
 	err = bcrypt.CompareHashAndPassword([]byte(user.Password),[]byte(request.Password))
 	if err != nil {
-		return models.User{},errors.New("Invalid Password")
+		return "",errors.New("Invalid Password")
 	}
+	token,err := utils.GenerateTokens(user)
+	if err != nil {
+		return "",err
+	}
+	
 
-	return user,nil
+	return token,nil
 }
