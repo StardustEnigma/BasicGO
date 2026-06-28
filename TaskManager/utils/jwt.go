@@ -9,18 +9,20 @@ import (
 )
 
 type Claims struct {
-	UserId int `json:"user_id"`
+	UserId int    `json:"user_id"`
 	Email  string `json:"email"`
 	jwt.RegisteredClaims
 }
 
-func GenerateTokens(user models.User)(string,error){
+var secretKey = []byte("my-secret-key-12345678")
+
+func GenerateTokens(user models.User) (string, error) {
 	claims := Claims{
 		UserId: user.UserId,
-		Email: user.Email,
+		Email:  user.Email,
 		RegisteredClaims: jwt.RegisteredClaims{
 			ExpiresAt: jwt.NewNumericDate(
-				time.Now().Add(24*time.Hour),
+				time.Now().Add(24 * time.Hour),
 			),
 			IssuedAt: jwt.NewNumericDate(
 				time.Now(),
@@ -28,33 +30,37 @@ func GenerateTokens(user models.User)(string,error){
 		},
 	}
 	token := jwt.NewWithClaims(
-		jwt.SigningMethodES256,
+		jwt.SigningMethodHS256,
 		claims,
 	)
-	tokenString,err :=token.SignedString(
-		"22233",
+	tokenString, err := token.SignedString(
+		secretKey,
 	)
-	if err != nil{
-		return "",err
+	if err != nil {
+		return "", err
 	}
-	return tokenString,nil
+	return tokenString, nil
 }
 
-func ValidateToken(tokenString string)(*Claims,error){
+func ValidateToken(tokenString string) (*Claims, error) {
+
 	claims := &Claims{}
-	token, err :=jwt.ParseWithClaims(
+	token, err := jwt.ParseWithClaims(
 		tokenString,
 		claims,
 		func(token *jwt.Token) (interface{}, error) {
-			return "22233",nil
+			return secretKey, nil
 		},
 	)
+	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, errors.New("unexpected signing method")
+	}
 	if err != nil {
-		return nil,err
+		return nil, err
 	}
 	if !token.Valid {
 		return nil,
-		errors.New("Invalid token")
+			errors.New("Invalid token")
 	}
-	return claims,nil
+	return claims, nil
 }

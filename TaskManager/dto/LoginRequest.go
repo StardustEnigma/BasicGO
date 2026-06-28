@@ -2,5 +2,5 @@ package dto
 
 type LoginRequest struct{
 	Email string `json:"email"`
-	Password string `json:"passoword"`
+	Password string `json:"password"`
 }

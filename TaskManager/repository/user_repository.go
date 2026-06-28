@@ -4,14 +4,14 @@ import (
 	"TaskManager/db"
 	"TaskManager/models"
 	"context"
-
+	"fmt"
 )
 
 func CreateUser(ctx context.Context,user models.User)(models.User,error){
 	query := `INSERT INTO users 
 				(email,password,created_at)
 				VALUES ($1,$2,$3)
-				RETURNING user_id,password,email,created_at`
+				RETURNING user_id,email,password,created_at`
 	var newUser models.User
 	err := db.DB.QueryRowContext(
 		ctx,
@@ -32,6 +32,7 @@ func CreateUser(ctx context.Context,user models.User)(models.User,error){
 }
 
 func GetUserFromLogin(ctx context.Context,email string)(models.User,error){
+	fmt.Printf("Email received: '%s'\n", email)
 	query := `SELECT 
 				user_id,
 				email,
