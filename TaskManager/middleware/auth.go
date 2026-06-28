@@ -6,7 +6,13 @@ import (
 	"net/http"
 	"strings"
 )
+type contextKey string
+const userIdKey contextKey = "userId"
 
+func GetUserId(ctx context.Context)(int,bool){
+	userId,ok := ctx.Value(userIdKey).(int)
+	return userId,ok
+}
 func AuthMiddleware(next http.Handler)http.Handler{
 		return http.HandlerFunc(
 			func(w http.ResponseWriter, r *http.Request) {
@@ -26,15 +32,14 @@ func AuthMiddleware(next http.Handler)http.Handler{
 				claims,err :=utils.ValidateToken(
 					tokenString,
 				)
-				type contextKey string
-				const UserIdKey contextKey = "userId"
+				
 				if err != nil {
 					http.Error(w,"Invalid Token",http.StatusUnauthorized)
 					return
 				}
 				ctx := context.WithValue(
 					r.Context(),
-					UserIdKey,
+					userIdKey,
 					claims.UserId,
 				)
 				r = r.WithContext(

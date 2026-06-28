@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"TaskManager/dto"
+	"TaskManager/middleware"
 	"TaskManager/models"
 	"TaskManager/services"
 	"encoding/json"
@@ -13,6 +14,11 @@ import (
 
 func CreateTask(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	userId,ok := middleware.GetUserId(ctx)
+	if !ok{
+		http.Error(w,"Unauthorized userId not found",http.StatusUnauthorized)
+		return
+	} 
 
 	if r.Method != http.MethodPost {
 		http.Error(w, "Method Not Allowed", http.StatusMethodNotAllowed)
@@ -24,6 +30,7 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Invalid Json", http.StatusBadRequest)
 		return
 	}
+	task.UserId=userId
 	Createdtask, err := services.CreateTask(task, ctx)
 	if err != nil {
 		fmt.Println("ERROR:", err)
@@ -40,11 +47,16 @@ func CreateTask(w http.ResponseWriter, r *http.Request) {
 
 func PrintAllTasks(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
+	userId,ok := middleware.GetUserId(ctx)
+	if !ok{
+		http.Error(w,"Unauthorized userId not found",http.StatusUnauthorized)
+		return
+	} 
 	if r.Method != http.MethodGet {
 		http.Error(w, "Method Not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	taskData, err := services.GetAllTask(ctx)
+	taskData, err := services.GetAllTask(ctx,userId)
 	if err != nil {
 
 		// 2. Minor fix: Database errors should usually be 500 Internal Server Error, not 400 Bad Request

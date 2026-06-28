@@ -52,12 +52,13 @@ func ValidateToken(tokenString string) (*Claims, error) {
 			return secretKey, nil
 		},
 	)
-	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-		return nil, errors.New("unexpected signing method")
-	}
 	if err != nil {
 		return nil, err
 	}
+	if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
+		return nil, errors.New("unexpected signing method")
+	}
+	
 	if !token.Valid {
 		return nil,
 			errors.New("Invalid token")

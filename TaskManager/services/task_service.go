@@ -28,8 +28,8 @@ func CreateTask( task models.Task,ctx context.Context)(models.Task,error){
 	return  task,nil
 }
 
-func GetAllTask(ctx context.Context)([]models.Task,error){
-	tasks,err:=repository.GetAllTask(ctx)
+func GetAllTask(ctx context.Context,userId int)([]models.Task,error){
+	tasks,err:=repository.GetAllTask(ctx,userId)
 	if err != nil {
 		return []models.Task{},err
 	}

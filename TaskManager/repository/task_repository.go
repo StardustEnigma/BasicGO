@@ -10,9 +10,9 @@ import (
 
 func CreateTask(ctx context.Context, task models.Task)(models.Task ,error) {
 	query := `INSERT INTO tasks
-			(title,status,created_at)
-			VALUES($1,$2,$3)
-			RETURNING task_id, title, status, created_at, completed_at
+			(title,status,created_at,user_id)
+			VALUES($1,$2,$3,$4)
+			RETURNING task_id, title, status, created_at, completed_at,user_id
 			`
 	var newTask models.Task
 	var nullCompleteAt sql.NullTime
@@ -22,12 +22,14 @@ func CreateTask(ctx context.Context, task models.Task)(models.Task ,error) {
 		task.Title,
 		task.TaskStatus,
 		task.CreatedAt,
+		task.UserId,
 	).Scan(
 		&newTask.TaskId,
 		&newTask.Title,
 		&newTask.TaskStatus,
 		&newTask.CreatedAt,
 		&nullCompleteAt,
+		&newTask.UserId,
 	)
 	if err != nil {
 		return models.Task{},err
@@ -38,17 +40,20 @@ func CreateTask(ctx context.Context, task models.Task)(models.Task ,error) {
 	return newTask,nil
 }
 
-func GetAllTask(ctx context.Context) ([]models.Task, error) {
+func GetAllTask(ctx context.Context,userId int) ([]models.Task, error) {
 	query := `SELECT
 				task_id,
 				title,
 				status,
 				created_at,
-				completed_at
-			FROM tasks`
+				completed_at,
+				user_id
+			FROM tasks
+			WHERE user_id = $1`
 	rows, err := db.DB.QueryContext(
 		ctx,
 		query,
+		userId,
 	)
 	if err != nil {
 		return nil, err
@@ -66,6 +71,7 @@ func GetAllTask(ctx context.Context) ([]models.Task, error) {
 			&task.TaskStatus,
 			&task.CreatedAt,
 			&nullCompleteAt,
+			&task.UserId,
 		)
 		if err != nil {
 			return nil, err
