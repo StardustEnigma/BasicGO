@@ -28,12 +28,24 @@ func CreateTask( task models.Task,ctx context.Context)(models.Task,error){
 	return  task,nil
 }
 
-func GetAllTask(ctx context.Context,userId int)([]models.Task,error){
-	tasks,err:=repository.GetAllTask(ctx,userId)
+func GetAllTask(ctx context.Context,userId int,pagestr string,limitstr string)([]models.Task,error){
+	page,err := strconv.Atoi(pagestr)
+	if err!=nil || page <=0 {
+		page=1;
+	}
+	limit,err := strconv.Atoi(limitstr)
+	if err != nil || limit <=0 {
+		limit=10
+	}
+	offset := (page-1)*limit
 	if err != nil {
 		return []models.Task{},err
 	}
-	return tasks,err
+	tasks,err:=repository.GetAllTask(ctx,userId,offset,limit)
+	if err != nil {
+		return []models.Task{},err
+	}
+	return tasks,nil
 }
 
 func GetTask(id string,ctx context.Context)(models.Task,error){
@@ -105,5 +117,22 @@ func ProcessTask(taskid int,ctx context.Context) error{
 		return err
 	}
 	return nil
+}
+
+func GetAllStatusTasks(ctx context.Context,pageStr string,limitStr string,status string,userId int)([]models.Task,error){
+	page,err := strconv.Atoi(pageStr)
+	if err != nil || page <=0{
+		page=1
+	}
+	limit,err := strconv.Atoi(limitStr)
+	if err != nil || limit<=0{
+		limit=10
+	}
+	offset := (page-1)*limit
+	tasks,err := repository.GetStatusTasks(ctx,limit,offset,status,userId)
+	if err != nil {
+		return []models.Task{},err
+	}
+	return tasks,nil
 }
 

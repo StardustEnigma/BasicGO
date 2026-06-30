@@ -56,9 +56,11 @@ func PrintAllTasks(w http.ResponseWriter, r *http.Request) {
 		http.Error(w, "Method Not allowed", http.StatusMethodNotAllowed)
 		return
 	}
-	taskData, err := services.GetAllTask(ctx,userId)
+	pagestr :=r.URL.Query().Get("page")
+	limitstr := r.URL.Query().Get("limit")
+	taskData, err := services.GetAllTask(ctx,userId,pagestr,limitstr)
 	if err != nil {
-
+		fmt.Println(err)
 		// 2. Minor fix: Database errors should usually be 500 Internal Server Error, not 400 Bad Request
 		http.Error(w, "Failed to fetch tasks", http.StatusInternalServerError)
 		return
@@ -75,6 +77,7 @@ func GetTask(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	idstr := chi.URLParam(r, "id")
+	
 	if idstr == "" {
 		http.Error(w, "Id is required", http.StatusBadRequest)
 		return
@@ -189,4 +192,21 @@ func StartTask(w http.ResponseWriter, r *http.Request) {
 	fmt.Fprintln(w, "Task Started")
 	fmt.Println("Task Started")
 
+}
+func GetTasksbyStatus(w http.ResponseWriter,r *http.Request){
+	ctx := r.Context()
+	userId,ok:= middleware.GetUserId(ctx)
+	if !ok {
+		http.Error(w,"Unauthorized Access ",http.StatusUnauthorized)
+		return
+	}
+	pageStr:= r.URL.Query().Get("page")
+	limitStr:= r.URL.Query().Get("limit")
+	status := r.URL.Query().Get("status")
+	tasks,err := services.GetAllStatusTasks(ctx,pageStr,limitStr,status,userId)
+	if err != nil {
+		http.Error(w,"Bad Request",http.StatusBadRequest)
+		return
+	}
+	json.NewEncoder(w).Encode(tasks)
 }

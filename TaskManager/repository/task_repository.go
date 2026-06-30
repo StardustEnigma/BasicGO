@@ -40,7 +40,7 @@ func CreateTask(ctx context.Context, task models.Task)(models.Task ,error) {
 	return newTask,nil
 }
 
-func GetAllTask(ctx context.Context,userId int) ([]models.Task, error) {
+func GetAllTask(ctx context.Context,userId int,offset int,limit int) ([]models.Task, error) {
 	query := `SELECT
 				task_id,
 				title,
@@ -49,11 +49,15 @@ func GetAllTask(ctx context.Context,userId int) ([]models.Task, error) {
 				completed_at,
 				user_id
 			FROM tasks
-			WHERE user_id = $1`
+			WHERE user_id = $1
+			LIMIT $2
+			OFFSET $3`
 	rows, err := db.DB.QueryContext(
 		ctx,
 		query,
 		userId,
+		limit,
+		offset,
 	)
 	if err != nil {
 		return nil, err
@@ -237,4 +241,54 @@ func CheckTaskExist(ctx context.Context,id int)(bool,error){
 	}
 
 	return true,nil
+}
+
+func GetStatusTasks(ctx context.Context,limit int,offset int,status string,userId int)([]models.Task,error){
+	query := `SELECT 
+				task_id,
+				title,
+				status,
+				created_at,
+				completed_at,
+				user_id
+				FROM tasks
+				WHERE user_id = $4 AND status = $3
+				LIMIT $1
+				OFFSET $2
+`
+	 rows,err:= db.DB.QueryContext(
+		ctx,
+		query,
+		limit,
+		offset,
+		status,
+		userId,
+
+	)
+	if err != nil {
+		return nil,err
+	}
+	defer rows.Close()
+	var tasks []models.Task
+	for rows.Next(){
+		var task models.Task
+		var nullCompleteAt sql.NullTime
+
+		err:=rows.Scan(
+			&task.TaskId,
+			&task.Title,
+			&task.TaskStatus,
+			&task.CreatedAt,
+			&nullCompleteAt,
+			&task.UserId,
+		)
+		if err != nil {
+			return []models.Task{},err
+		}
+		if nullCompleteAt.Valid{
+			task.CompletedAt=&nullCompleteAt.Time
+		}
+		tasks = append(tasks, task)
+	}
+	return tasks,nil
 }

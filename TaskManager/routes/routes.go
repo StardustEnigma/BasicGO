@@ -23,6 +23,7 @@ func RegisterRoutes() *chi.Mux{
 			r.Put("/tasks/{id}",handlers.UpdateTask)
 			r.Post("/tasks/{id}/complete",handlers.MarkCompleted)
 			r.Post("/tasks/{id}/start",handlers.StartTask)
+			r.Get("/tasks",handlers.GetTasksbyStatus)
 		},
 	)
 	return r
